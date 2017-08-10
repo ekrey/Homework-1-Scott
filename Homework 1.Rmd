@@ -1,0 +1,547 @@
+---
+title: "Homework 1"
+author: "Elena Reynolds"
+date: "August 11, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Probability Practice 
+
+#Part A.
+Here's a question a friend of mine was asked when he interviewed at Google.
+
+Visitors to your website are asked to answer a single survey question before they get access to the content on the page. Among all of the users, there are two categories: Random Clicker (RC), and Truthful Clicker (TC). There are two possible answers to the survey: yes and no. Random clickers would click either one with equal probability. You are also giving the information that the expected fraction of random clickers is 0.3.
+
+After a trial period, you get the following survey results: 65% said Yes and 35% said No.
+
+What fraction of people who are truthful clickers answered yes? 5/7
+
+Insert photo:
+
+```{r}
+
+
+
+
+```
+#Part B.
+Imagine a medical test for a disease with the following two attributes:
+
+The sensitivity is about 0.993. That is, if someone has the disease, there is a probability of 0.993 that they will test positive.
+The specificity is about 0.9999. This means that if someone doesn't have the disease, there is probability of 0.9999 that they will test negative.
+In the general population, incidence of the disease is reasonably rare: about 0.0025% of all people have it (or 0.000025 as a decimal probability).
+
+Suppose someone tests positive. What is the probability that they have the disease? In light of this calculation, do you envision any problems in implementing a universal testing policy for the disease?
+
+Insert photo of math:
+
+
+Answer: 
+-Given someone tests positive, there is a 19.9% probability that they have the disease. That is a really high percentage of false positives, even though the number of false negatives is low. Without further testing, you may see a lot of people being treated for a disease they don't have. Don't want to give people medication that could have side effects if it's acting against nothing. 
+
+
+#Exploratory Analysis: Green Buildings
+
+Payoff possibilities:
+
+1. lower recurring costs
+2. better indoor environments -> more desirable real estate
+3. good corporate image -> can charge premium prices
+4. sustainability in a physical sense, less susceptibility to market risk
+
+> names(GreenBuildings)
+ [1] "CS_PropertyID"     "cluster"           "size"             
+ [4] "empl_gr"           "Rent"              "leasing_rate"     
+ [7] "stories"           "age"               "renovated"        
+[10] "class_a"           "class_b"           "LEED"             
+[13] "Energystar"        "green_rating"      "net"              
+[16] "amenities"         "cd_total_07"       "hd_total07"       
+[19] "total_dd_07"       "Precipitation"     "Gas_Costs"        
+[22] "Electricity_Costs" "cluster_rent"  
+
+
+```{r}
+GreenBuildings = read.csv('~/Documents/Github/STA380/data/greenbuildings.csv', header=TRUE)
+
+# What we disagree with: don't look at green buildings only and non-green buildings only
+  # need to look within clusters (how to distinguish premiums)
+# agree with other things they did (don't change)
+  # cluster rent values --> can see that the buildingIDs go with the clusters
+
+cluster = as.factor(GreenBuildings$cluster)
+renovated = as.factor(GreenBuildings$renovated)
+LEED = as.factor(GreenBuildings$LEED)
+Energystar = as.factor(GreenBuildings$Energystar)
+net = as.factor(GreenBuildings$net)
+amenities = as.factor(GreenBuildings$amenities)
+green_rating = as.factor(GreenBuildings$green_rating)
+class_a = as.factor(GreenBuildings$class_a)
+class_b = as.factor(GreenBuildings$class_b)
+
+# is the 5 million dollars extra spent justified? investigate this 
+# -- is there actually a premium for green certification? 
+# interaction between green certification and rent
+
+prem = lm(cluster_rent~. -Rent, data = GreenBuildings)
+summary(prem)
+confint(prem)
+
+#model1 = lm(Rent ~ age + cluster + class_a + class_b + size, data = GreenBuildings)
+model1 = lm(cluster_rent ~ age + class_a + class_b + stories, data = GreenBuildings)
+
+#model1 = lm(Rent ~ age + green_rating + class_a + class_b + size, data = GreenBuildings)
+plot(GreenBuildings$age,GreenBuildings$Rent,pch=19,cex=1.5,xlab="age",ylab = "rent")
+abline(model1$coef[1],model1$coef[2],col=2,lwd=2)
+
+summary(model1)
+
+
+# Green buildings may be more expensive because they're older
+```
+
+
+
+#Bootstrapping
+```{r}
+
+# Portfolio 1 - equal split
+set.seed(123)
+library(foreach)
+
+assets = c("SPY","TLT","LQD","EEM","VNQ")
+prices = getSymbols(assets, from = "2006-01-01")
+
+for(ticker in assets) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+par(mfrow=c(2,3))
+plot(ClCl(SPYa))
+hist(ClCl(SPYa), breaks=50) 
+plot(ClCl(TLTa))
+hist(ClCl(TLTa), breaks=50)
+plot(ClCl(LQDa))
+hist(ClCl(LQDa), breaks=50)
+plot(ClCl(EEMa))
+hist(ClCl(EEMa), breaks=50)
+plot(ClCl(VNQa))
+hist(ClCl(VNQa), breaks=50)
+
+# Combine close to close changes in a single matrix
+all_returns = cbind(ClCl(SPYa), ClCl(TLTa), ClCl(LQDa), ClCl(EEMa), ClCl(VNQa))
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# These returns can be viewed as draws from the joint distribution
+pairs(all_returns)
+plot(all_returns[,1], type='l')
+
+# The sample correlation matrix
+cor(all_returns)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(SPYa),
+  ClCl(TLTa),
+  ClCl(LQDa),
+  ClCl(EEMa),
+  ClCl(VNQa)
+)
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Compute the returns from the closing prices
+pairs(all_returns)
+
+# Sample a random return from the empirical joint distribution
+# This simulates a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Update the value of your holdings
+# Assumes an equal allocation to each asset
+total_wealth = 100000
+weights = c(0.2, 0.2, 0.2, 0.2, 0.2) 
+holdings = total_wealth*weights
+holdings = holdings*(1 + return.today)
+total_wealth = sum(holdings)   #99712.5
+
+# Now loop over four trading weeks
+
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth # 101722.1
+plot(wealthtracker, type='l')
+
+# simulating many possible different scenarios:
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.2, 0.2, 0.2, 0.2, 0.2)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+head(sim1)
+hist(sim1[,n_days], 25)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk  
+quantile(sim1[,n_days], 0.05) - initial_wealth    
+
+```
+# Safe 
+
+```{r}
+set.seed(123)
+library(foreach)
+
+safe = c("SPHD","EFAV","AGG")
+safeprices = getSymbols(safe, from = "2006-01-01")
+
+for(ticker in safe) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+plot(ClCl(SPHDa))
+hist(ClCl(SPHDa), breaks=50) 
+plot(ClCl(EFAVa))
+hist(ClCl(EFAVa), breaks=50)
+plot(ClCl(AGGa))
+hist(ClCl(AGGa), breaks=50)
+
+# Combine close to close changes in a single matrix
+all_returns = cbind(ClCl(SPHDa), ClCl(EFAVa), ClCl(AGGa))
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# These returns can be viewed as draws from the joint distribution
+pairs(all_returns)
+plot(all_returns[,1], type='l')
+
+# The sample correlation matrix
+cor(all_returns)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(SPHDa),
+  ClCl(EFAVa),
+  ClCl(AGGa)
+)
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Compute the returns from the closing prices
+pairs(all_returns)
+
+
+# Sample a random return from the empirical joint distribution
+# This simulates a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Update the value of your holdings
+# Assumes an equal allocation to each asset
+total_wealth = 100000
+weights = c(1/3, 1/3, 1/3) 
+holdings = total_wealth*weights
+holdings = holdings*(1 + return.today)
+total_wealth = sum(holdings)   
+
+# Now loop over four trading weeks
+
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth 
+plot(wealthtracker, type='l')
+
+# simulating many possible different scenarios:
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(1/3, 1/3, 1/3)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+head(sim1)
+hist(sim1[,n_days], 25)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk 
+quantile(sim1[,n_days], 0.05) - initial_wealth 
+```
+
+
+# Risky
+```{r}
+set.seed(123)
+library(foreach)
+
+risky = c("DUST","UVXY")
+riskyprices = getSymbols(risky, from = "2006-01-01")
+
+for(ticker in risky) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+head(DUSTa)
+
+plot(ClCl(DUSTa))
+hist(ClCl(DUSTa), breaks=50) 
+plot(ClCl(UVXYa))
+hist(ClCl(UVXYa), breaks=50)
+
+# Combine close to close changes in a single matrix
+all_returns = cbind(ClCl(DUSTa), ClCl(UVXYa))
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# These returns can be viewed as draws from the joint distribution
+pairs(all_returns)
+plot(all_returns[,1], type='l')
+
+# The sample correlation matrix
+cor(all_returns)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(DUSTa),
+  ClCl(UVXYa)
+)
+head(all_returns)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Compute the returns from the closing prices
+pairs(all_returns)
+
+
+# Sample a random return from the empirical joint distribution
+# This simulates a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Update the value of your holdings
+# Assumes an equal allocation to each asset
+total_wealth = 100000
+weights = c(0.5, 0.5) 
+holdings = total_wealth*weights
+holdings = holdings*(1 + return.today)
+total_wealth = sum(holdings)   
+
+# Now loop over four trading weeks
+
+n_days = 20
+wealthtracker = rep(0, n_days) # Set up a placeholder to track total wealth
+for(today in 1:n_days) {
+  return.today = resample(all_returns, 1, orig.ids=FALSE)
+  holdings = holdings + holdings*return.today
+  total_wealth = sum(holdings)
+  wealthtracker[today] = total_wealth
+}
+total_wealth 
+plot(wealthtracker, type='l')
+
+# simulating many possible different scenarios:
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.5, 0.5)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+  }
+  wealthtracker
+}
+
+head(sim1)
+hist(sim1[,n_days], 25)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk 
+quantile(sim1[,n_days], 0.05) - initial_wealth 
+
+
+```
+
+
+
+#Market Segmentation
+
+```{r}
+
+
+# all variables are integer factors
+
+library(ggplot2)
+library(LICORS)  # for kmeans++
+library(foreach)
+library(mosaic)
+
+MarketData = read.csv('~/Documents/Github/STA380/data/social_marketing.csv', header=TRUE)
+summary(MarketData)
+
+
+# Center and scale the data
+X = MarketData[,-1]
+X = scale(X, center=TRUE, scale=TRUE)
+
+# Extract the centers and scales from the rescaled data (which are named attributes)
+mu = attr(X,"scaled:center")
+sigma = attr(X,"scaled:scale")
+
+# Run k-means with 6 clusters and 25 starts
+clust1 = kmeans(X, 6, nstart=25)
+
+# What are the clusters?
+clust1$center  # not super helpful
+clust1$center[1,]*sigma + mu
+clust1$center[2,]*sigma + mu
+clust1$center[4,]*sigma + mu
+
+
+# Which categories are in which clusters?
+which(clust1$cluster == 1)
+which(clust1$cluster == 2)
+which(clust1$cluster == 3)
+which(clust1$cluster == 4)
+which(clust1$cluster == 5)
+
+names(clust1)
+
+# A few plots with cluster membership shown
+# qplot is in the ggplot2 library
+
+qplot(online_gaming, computers, data=MarketData, color=factor(clust1$cluster))
+qplot(politics, news, data=MarketData, color=factor(clust1$cluster))
+
+kmax = 20
+# Using kmeans++ initialization
+
+chRange = c()
+wRange = c()
+
+for (k in 2:10){
+  clustk = assign(paste("clust",k, sep=""), kmeanspp(X, k, nstart=25))
+  #clustk$center[1,]*sigma + mu
+  #clustk$center[2,]*sigma + mu
+  #clustk$center[3,]*sigma + mu
+  n = nrow(X)
+  w = assign(paste("w",k, sep=""), clustk$tot.withinss)
+  wRange = rbind(wRange, w)
+  b = assign(paste("b",k, sep=""), clustk$betweenss)
+  ch = assign(paste("ch",k, sep=""), (b/(k-1))/(w/(n-k)))
+  chNew = ch
+  chRange = rbind(chRange, chNew)
+}
+
+kRange = 2:10
+plot(kRange, wRange)
+
+chRange # max at k=2
+
+clust2 = kmeanspp(X, k=10, nstart=25)
+
+clust2$center[1,]*sigma + mu
+clust2$center[2,]*sigma + mu
+clust2$center[4,]*sigma + mu
+
+# Which categories are in which clusters?
+which(clust2$cluster == 1)
+which(clust2$cluster == 2)
+which(clust2$cluster == 3)
+
+# Compare versus within-cluster average distances from the first run
+clust1$withinss
+clust2$withinss
+sum(clust1$withinss) # tot.withinss
+sum(clust2$withinss) # only slightly better in this case
+clust2$tot.withinss
+clust2$betweenss
+
+# try plotting CH index as a function of k and finding maximum value
+  # market segmentation
+
+```
+
+```{r}
+
+library(ggplot2)
+
+MarketData = read.csv("~/Documents/Github/STA380/data/social_marketing.csv", header=TRUE,row.names=1)
+
+# Normalize phrase counts to phrase frequencies
+Z = MarketData/rowSums(MarketData)
+
+# PCA
+pc2 = prcomp(Z, scale=TRUE)
+loadings = pc2$rotation
+scores = pc2$x
+
+qplot(scores[,1], scores[,2], xlab='Component 1', ylab='Component 2')
+
+# The top words associated with each component
+o1 = order(loadings[,1], decreasing=TRUE)
+print("Most common tweet topics for users high in PC1:")
+colnames(Z)[head(o1,6)]
+print("Least common tweet topics for users high in PC1:")
+colnames(Z)[tail(o1,6)]
+
+o2 = order(loadings[,2], decreasing=TRUE)
+print("Most common tweet topics for users high in PC2:")
+colnames(Z)[head(o2,6)]
+print("Least common tweet topics for users high in PC2:")
+colnames(Z)[tail(o2,6)]
+
+
+summary(pc2)
+plot(pc2)
+biplot(pc2)
+
+```
+
