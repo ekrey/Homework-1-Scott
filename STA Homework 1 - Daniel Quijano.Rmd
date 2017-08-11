@@ -1,0 +1,93 @@
+---
+title: "STA 380 Homework 1 Quijano"
+author: "Daniel Quijano"
+date: "August 7, 2017"
+output: html_document
+---
+
+Let's start by loading in the data and doing some exploratory analysis.
+
+```{r}
+green = read.csv("~/GitHub/STA380/data/greenbuildings.csv")
+green = na.omit(green)
+green_only = subset(green, green_rating == 1)
+nongreen = subset(green, green_rating == 0)
+library(dplyr)
+
+head(green)
+tail(green)
+glimpse(green)
+
+```
+
+The green dots in the plot below represent buildings with green certification. 
+```{r}
+pairs(~Rent + size + leasing_rate + stories + age + green_rating  , data = green) #comparing variables we expect to have an important effect on rent.
+hist(green$Rent, breaks = 20, xlab = 'Rent ($/sqft/year)')
+plot(Rent~size, data = green, pch = 20, cex = .5)
+points(green_only$size, green_only$Rent, col = 'green', pch = 20, cex = .5)
+```
+Using this histogram, we can see that there are some observations with very large rent. Let's take a closer look at those observations.
+
+```{r}
+bigrent = subset(green, green$Rent > 100)
+subset(green, green$cluster == 1230)
+```
+
+
+#Our approach to solving the problem
+
+In order to answer this question, we first fit a linear model of the size of green buildings to their number of stories. Using this model, we predicted that our 15-story building will be about 320,000 sq ft in area (as shown by the intersect of the three lines). 
+```{r}
+size.fit = lm(size~stories, data = green_only)
+y = predict(size.fit, data.frame(stories = 15))
+plot(green_only$stories, green_only$size, ylab = 'Rent per sq ft per year', xlab = 'Size in sq ft')
+abline(size.fit$coefficients[1], size.fit$coefficients[2], col = "green", lwd = 3)
+abline(y,0, col = 'green')
+abline(v=15, col = 'green')
+points(15, y, cex = 1.5, pch = 20, col = 'purple')
+
+```
+
+We will use this estimate to deterime the additional rent (which will be attributed to whether or not the building is classified as 'green') per square foot  needed to pay off the additional $5,000,000 capital expense. 
+
+To do this, we will attempt to isolate the effect of a green rating on rent by fitting a linear model that regresses rent against certain variables we select from our data set. The coefficient of the as.factor(green_rating)1 will show how much rent increases (or decreases) for green buildings.
+
+```{r}
+rent.fit = lm(Rent~+as.factor(green_rating)+as.factor(class_a)+as.factor(class_b)+size, data = green)
+summary(rent.fit)
+```
+
+After experimenting with nearly a dozen different models, we came up with the one above. Surprisingly, this model (among many others) indicates that the green buildings actually  charge less rent! However, based on the p-value for this variable, this figure may or may not be considered significant. This means that the classification as 'green' or 'nongreen' may not actually affect the rent charged.  
+
+There are, however, other ways in which green buildings create value for the owner. Specifically, we are referring to cost savings on utility bills. One way this analysis could be improved is if there was some way to quantify this (perhaps using the total_dd_07 or the gas/electric costs columns) and consider the savings against the capital costs.
+
+Another way we could improve our would be to perform a comps analysis. If we could determine how comparable each cluster was to the area we are interested in for our building, we could examine our data in a more refined context. 
+
+
+
+#What we think the excel guru did right/wrong
+
+1. We believe it was incorrect to remove the buildings with less than 10% occupancy from the data set. While it could be that something 'weird' going on, as the excel guru said, there are a number of other possible explanations for this. For example, they could be new buildings that are in the process of leasing out office space, or they could have been built in markets that no longer have a need for more space. An example of the latter could be the city of Houston after the oil prices crashed in 2014. Before 2014 the oil and gas prices were sky-high and many people thought they would remain there for a long time. Because of this sentiment, a great deal of investment was made. However, when prices fell and people realized a recovery would not come as quickly as they had hoped, many of these investments were cancelled. one of the many outcomes was a large surplus of office space. While this isn't 'business as usual,' it is a real business situation that should be considered. 
+
+2. Another error in judgment is that he assumed that rents were affected by whether or not the building is considered green. As we came to realize from fitting numerous models, the p-value for the green_rating variable was too high. While it is true that the medain rent charged by green buildings is higher than that of non-green ones, it could be attributed to other factors. For example, green buildings tend to be newer and fancier than conventional ones - as seen in the charts below. 
+
+```{r}
+par(mfrow = c(2,2))
+hist(nongreen$age, main = 'Age of nongreen Buildings', xlab = 'age', xlim = range(1:150), breaks = 20, ylim = range(1:2000))
+hist(green_only$age, main = 'Age of GREEN Buildings', xlab = 'age', xlim = range(1:150), breaks = 10, ylim = range(1:2000))
+
+barplot(table(nongreen$class_a==0, nongreen$class_a==1), main = 'Fancy nongreen Buildings', ylim = range(1:4500))
+barplot(table(green_only$class_a==0, green_only$class_a==1), main = 'Fancy GREEN Buildings', ylim = range(1:4500))
+```
+
+
+3. Otherwise, we agree with his general approach. Using median rent instead of mean rent is an acceptable approach because outliers do not throw off the calculation. Also, comparing an expected additional rent that could be charged with green buildings to the added cost of consturction is correctly matching costs with expected revenues.
+
+
+
+
+
+
+
+
