@@ -1,0 +1,416 @@
+---
+title: "Homework 1"
+author: "Christine Mulcahy, Daniel Quijano, and Elena Reynolds"
+date: "August 11, 2017"
+output: 
+  md_document:
+    variant: markdown_github
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Probability Practice 
+
+#Part A.
+
+! [Part A math] (https://github.com/ekrey/Homework-1-Scott/blob/master/IMG_2852.JPG)
+Answer: 
+5/7 of all people answering the survey were truthful clickers that answered yes. 
+
+#Part B.
+
+! [Part B math] (https://github.com/ekrey/Homework-1-Scott/blob/master/IMG_2849.JPG)
+
+Answer: 
+
+-Given someone tests positive, there is a 19.9% probability that they have the disease. In implementing a universal testing policy, people being tested should be made aware that there is only a 1 in 5 chance that they have the disease given their positive test. Those showing positive test results will have to go into further testing to confirm the disease state, otherwise they may be mistakenly treated for a disease they don't have. 
+
+
+#Exploratory Analysis: Green Buildings
+
+Let's start by loading in the data and doing some exploratory analysis.
+
+```{r}
+green = read.csv('https://raw.githubusercontent.com/jgscott/STA380/master/data/greenbuildings.csv')
+green = na.omit(green)
+green_only = subset(green, green_rating == 1)
+nongreen = subset(green, green_rating == 0)
+library(dplyr)
+
+head(green)
+tail(green)
+glimpse(green)
+
+```
+
+The green dots in the plot below represent buildings with green certification. 
+```{r}
+pairs(~Rent + size + leasing_rate + stories + age + green_rating  , data = green) #comparing variables we expect to have an important effect on rent.
+hist(green$Rent, breaks = 20, xlab = 'Rent ($/sqft/year)')
+plot(Rent~size, data = green, pch = 20, cex = .5)
+points(green_only$size, green_only$Rent, col = 'green', pch = 20, cex = .5)
+```
+Using this histogram, we can see that there are some observations with very large rent. Let's take a closer look at those observations.
+
+```{r}
+bigrent = subset(green, green$Rent > 100)
+subset(green, green$cluster == 1230)
+```
+
+
+#Our approach to solving the problem
+
+In order to answer this question, we first fit a linear model of the size of green buildings to their number of stories. Using this model, we predicted that our 15-story building will be about 320,000 sq ft in area (as shown by the intersect of the three lines). 
+```{r}
+size.fit = lm(size~stories, data = green_only)
+y = predict(size.fit, data.frame(stories = 15))
+plot(green_only$stories, green_only$size, ylab = 'Rent per sq ft per year', xlab = 'Size in sq ft')
+abline(size.fit$coefficients[1], size.fit$coefficients[2], col = "green", lwd = 3)
+abline(y,0, col = 'green')
+abline(v=15, col = 'green')
+points(15, y, cex = 1.5, pch = 20, col = 'purple')
+
+```
+
+We will use this estimate to deterime the additional rent (which will be attributed to whether or not the building is classified as 'green') per square foot  needed to pay off the additional $5,000,000 capital expense. 
+
+To do this, we will attempt to isolate the effect of a green rating on rent by fitting a linear model that regresses rent against certain variables we select from our data set. The coefficient of the as.factor(green_rating)1 will show how much rent increases (or decreases) for green buildings.
+
+```{r}
+rent.fit = lm(Rent~+as.factor(green_rating)+as.factor(class_a)+as.factor(class_b)+size, data = green)
+summary(rent.fit)
+```
+
+After experimenting with nearly a dozen different models, we came up with the one above. Surprisingly, this model (among many others) indicates that the green buildings actually  charge less rent! However, based on the p-value for this variable, this figure may or may not be considered significant. This means that the classification as 'green' or 'nongreen' may not actually affect the rent charged.  
+
+There are, however, other ways in which green buildings create value for the owner. Specifically, we are referring to cost savings on utility bills. One way this analysis could be improved is if there was some way to quantify this (perhaps using the total_dd_07 or the gas/electric costs columns) and consider the savings against the capital costs.
+
+Another way we could improve our would be to perform a comps analysis. If we could determine how comparable each cluster was to the area we are interested in for our building, we could examine our data in a more refined context. 
+
+
+
+#What we think the excel guru did right/wrong
+
+1. We believe it was incorrect to remove the buildings with less than 10% occupancy from the data set. While it could be that something 'weird' going on, as the excel guru said, there are a number of other possible explanations for this. For example, they could be new buildings that are in the process of leasing out office space, or they could have been built in markets that no longer have a need for more space. An example of the latter could be the city of Houston after the oil prices crashed in 2014. Before 2014 the oil and gas prices were sky-high and many people thought they would remain there for a long time. Because of this sentiment, a great deal of investment was made. However, when prices fell and people realized a recovery would not come as quickly as they had hoped, many of these investments were cancelled. one of the many outcomes was a large surplus of office space. While this isn't 'business as usual,' it is a real business situation that should be considered. 
+
+2. Another error in judgment is that he assumed that rents were affected by whether or not the building is considered green. As we came to realize from fitting numerous models, the p-value for the green_rating variable was too high. While it is true that the medain rent charged by green buildings is higher than that of non-green ones, it could be attributed to other factors. For example, green buildings tend to be newer and fancier than conventional ones - as seen in the charts below. 
+
+```{r}
+library(lattice)
+par(mfrow=c(1,2))
+histogram(nongreen$age, main = 'Age of nongreen Buildings', xlab = 'age', xlim = range(1:150), breaks = 20, ylim = range(1:45))
+histogram(green_only$age, main = 'Age of GREEN Buildings', xlab = 'age', xlim = range(1:150), breaks = 10, ylim = range(1:45))
+
+classa.freq = table(nongreen$class_a)
+gclassa.freq = table(green_only$class_a)
+barplot(classa.freq/sum(classa.freq), main = 'Fancy nongreen Buildings', ylim = range(0,.8), ylab = 'Fraction of all Buildings')
+barplot(gclassa.freq/sum(gclassa.freq), main = 'Fancy GREEN Buildings', ylim = range(0,.8), ylab = 'Fraction of GREEN Buildings')
+```
+
+3. Otherwise, we agree with his general approach. Using median rent instead of mean rent is an acceptable approach because outliers do not throw off the calculation. Also, comparing an expected additional rent that could be charged with green buildings to the added cost of consturction is correctly matching costs with expected revenues.
+
+
+##Bootstrapping
+
+Our answer outlines each portfolio in separate chunks of code before presenting a summary of all results. In each portfolio, we estimated the 4-week value at risk by utilizing bootstrap resampling. 
+
+#Portfolio 1: Equal split across given ETFs
+Our first portfolio considers an equal split across five classes of ETFs: US domestic equities (SPY), US Treasury bonds (TLT), investment-grade corporate bonds (LQD), emerging-market equities (EEM), and real estate (VNQ).
+```{r}
+
+set.seed(123)  # for reproducibility of results
+library(foreach)
+library(quantmod)
+library(mosaic)
+
+assets = c("SPY","TLT","LQD","EEM","VNQ")
+prices = getSymbols(assets, from = "2006-01-01")
+
+for(ticker in assets) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+# Plot close-to-close changes
+par(mfrow=c(3,2))
+plot(ClCl(SPYa))
+hist(ClCl(SPYa), breaks=50) 
+plot(ClCl(TLTa))
+hist(ClCl(TLTa), breaks=50)
+plot(ClCl(LQDa))
+hist(ClCl(LQDa), breaks=50)
+plot(ClCl(EEMa))
+hist(ClCl(EEMa), breaks=50)
+plot(ClCl(VNQa))
+hist(ClCl(VNQa), breaks=50)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(SPYa),
+  ClCl(TLTa),
+  ClCl(LQDa),
+  ClCl(EEMa),
+  ClCl(VNQa)
+)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Simulate a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Looping over 4 trading weeks (n_days = 20)
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.2, 0.2, 0.2, 0.2, 0.2)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings*(1 + return.today)
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+    holdings = weights * total_wealth # rebalance
+  }
+  wealthtracker
+}
+
+par(mfrow=c(2,1))
+hist(sim1[,n_days], 30)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk  
+quantile(sim1[,n_days], 0.05) - initial_wealth    
+```
+These five asset classes' risk and return properties can be interpreted by each ClCl plot and histogram. The US domestic equities (SPY) appears to have a higher tail on the right side of its histogram, suggesting a higher potential for return than the risk it poses. Close-to-close volatility in this ETF looks generally to stay within +/- 0.05. The US Treasury bonds asset (TLT) shows a more normal distribution for ClCl return versus risk, and seems to be less volatile on average than SPY. The investment-grade corporate bonds (LQD) show low volatility and not a lot of return or risk potential. Emerging-market equities (EEM) doesn't appear to be as volatile and has a wide-right histogram tail from 2008. The real estate asset (VNQ) seems to have less promise for return than in past years.
+
+# Portfolio 2: Safe ETFs
+Next, we created a portfolio using three different ETFs established to be safe choices. These ETFs include the SPDR Gold Trust (GLD), which protects against "tail risks" in the market, the minimum-volatility iShares Edged MSCI Min Vol EAFE ETF (EFAV), and the generally "risk-free" iShares Core US Aggregate Bond ETF (AGG). We set an even split between these three ETFs. 
+```{r}
+
+set.seed(123)
+library(foreach)
+library(quantmod)
+library(mosaic)
+
+safe = c("GLD","EFAV","AGG") 
+safeprices = getSymbols(safe, from = "2006-01-01")
+
+for(ticker in safe) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+# Plot close-to-close changes
+par(mfrow=c(3,2))
+plot(ClCl(GLDa))
+hist(ClCl(GLDa), breaks=50) 
+plot(ClCl(EFAVa))
+hist(ClCl(EFAVa), breaks=50)
+plot(ClCl(AGGa))
+hist(ClCl(AGGa), breaks=50)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(GLDa),
+  ClCl(EFAVa),
+  ClCl(AGGa)
+)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Simulate a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Loop over 4 trading weeks
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(1/3, 1/3, 1/3)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings*(1 + return.today)
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+    holdings = weights * total_wealth  # rebalance
+  }
+  wealthtracker
+}
+
+par(mfrow=c(2,1))
+hist(sim1[,n_days], 30)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk 
+quantile(sim1[,n_days], 0.05) - initial_wealth 
+```
+
+#Portfolio 3: Risky ETFs
+Finally, we built our most aggressive portfolio from 2 ETFs that have been established to be very volatile in nature and by design. These choices included a volatile stock ETF, Direxion Daily Gold Miners Bear 3x ETF (DUST), as well as UVXY, an ETF titled ProShares Ultra VIX Short-term Futures Fund that invests in volatility (or the "fear index") rather than stocks. We set an even split between these two ETFs. 
+```{r}
+set.seed(123)
+library(foreach)
+library(quantmod)
+library(mosaic)
+
+risky = c("DUST","UVXY")
+riskyprices = getSymbols(risky, from = "2006-01-01")
+
+for(ticker in risky) {
+  expr = paste0(ticker, "a = adjustOHLC(", ticker, ")")
+  eval(parse(text=expr))
+}
+
+# Plot close-to-close changes
+par(mfrow=c(2,2))
+plot(ClCl(DUSTa))
+hist(ClCl(DUSTa), breaks=50) 
+plot(ClCl(UVXYa))
+hist(ClCl(UVXYa), breaks=50)
+
+# Combine all the returns in a matrix
+all_returns = cbind(	
+  ClCl(DUSTa),
+  ClCl(UVXYa)
+)
+all_returns = as.matrix(na.omit(all_returns))
+
+# Simulate a random day
+return.today = resample(all_returns, 1, orig.ids=FALSE)
+
+# Loop over 4 trading weeks:
+initial_wealth = 100000
+sim1 = foreach(i=1:5000, .combine='rbind') %do% {
+  total_wealth = initial_wealth
+  weights = c(0.5, 0.5)
+  holdings = weights * total_wealth
+  n_days = 20
+  wealthtracker = rep(0, n_days)
+  for(today in 1:n_days) {
+    return.today = resample(all_returns, 1, orig.ids=FALSE)
+    holdings = holdings + holdings*return.today
+    total_wealth = sum(holdings)
+    wealthtracker[today] = total_wealth
+    holdings = weights * total_wealth  # rebalance
+  }
+  wealthtracker
+}
+
+par(mfrow=c(2,1))
+hist(sim1[,n_days], 30)
+
+# Profit/loss
+mean(sim1[,n_days])
+hist(sim1[,n_days]- initial_wealth, breaks=30)
+
+# Calculate 5% value at risk 
+quantile(sim1[,n_days], 0.05) - initial_wealth 
+
+```
+# Summary
+
+5% value at risk for each portfolio:
+  * Portfolio 1: -6186.33
+  * Portfolio 2 (safe): -3215.45
+  * Portfolio 3 (aggressive): -53029.15
+  
+Looking at each histogram of frequency vs. profit/loss for the simulation over 4 trading weeks, we can see a good representation of what we expected when building our portfolios. The first portfolio with the even split across the 5 given ETFs shows a profit/loss distribuition after subtracting the initial \$100,000 of around \$10,000 above and below 0. The second portfolio's safety is represented in this profit/loss range shrinking to around +/- \$5000. The risky portfolio, on the other hand, has a profit/loss distribution from below -\$50,000 to \$50,000, involving a great deal of volatility in just 20 trading days. The 5% values at risk also confirm the respective safety and risk built into Portfolios 2 and 3, with a much higher value for portfolio 3 and a smaller value than portfolio 1 for the third portfolio. 
+
+##Market Segmentation
+```{r}
+library(ggplot2)
+library(LICORS)  # for kmeans++
+library(foreach)
+library(mosaic)
+
+social = read.csv('http://raw.githubusercontent.com/jgscott/STA380/master/data/social_marketing.csv', header=TRUE)
+head(social[,-1],5)
+
+#scale the data
+X = social[,-1]
+X = X/rowSums(X)
+```
+
+We decided to scale the data according to their row sums because we want all users' interests to be equally weighted regardless of their overall level of twitter usage.
+
+
+#Kmeans method:
+```{r kmeans method}
+#test various k values
+CH_list = {}
+kval = c(2,4,6,10,15)
+for (i in kval){
+  # Using kmeans++ initialization
+  cluster = kmeanspp(X, k=i, nstart=25)
+  W = cluster$tot.withinss
+  B = cluster$betweenss
+  nk = (nrow(social)-i)/(i-1)
+  val = (B/W)*nk
+  CH_list = c(CH_list,val)
+  cat(c(i," "))
+}
+
+#plot CH index againt k value to find best k
+plot(kval,CH_list)
+```
+
+The plot of CH index against K value, we decided that the best k value is 6. The max CH value occurs when k = 2, but since our dataset is so large, it makes sense to split into more than 2 clusters. At a k value of 6, the CH index is high, but we are clustering the data into smaller subsets, so we chose to work with k = 6 clusters.
+
+```{r}
+#run kmeans to cluster the data
+set.seed(11)
+finalcluster = kmeanspp(X, k=6, nstart=25)
+
+finalcluster$size
+finalcluster$centers[2,]
+finalcluster$centers[4,]
+```
+
+The largest clusters are clusters 2 and 4, so we can look at the top topics of interest in the clusters to learn about many of the followers. Cluster 2 displays an interest in photo sharing, shopping, current events, and travel. Cluster 4 shows interest in sports fandom, food, and religion. We can use this information to tailor our message in our marketing campaign.
+
+```{r}
+#plot to show our target influencers
+qplot(health_nutrition, food, data=X, color=factor(finalcluster$cluster))
+```
+
+After looking at the 6 clusters, we plotted the clusters against health_nutrition and food because we determined that these are the topics that most relate to nutrientH2O. We found that groups 4 and 5 show a high level of interest in these topics, so we can find the influencers among these groups to help us campaign about NutrientH2O.
+
+
+#PCA method:
+```{r PCA method}
+
+# PCA
+set.seed(12)
+PC = prcomp(X, scale=TRUE)
+loadings = PC$rotation
+scores = PC$x
+
+
+# Show the top topics associated with each component
+o1 = order(loadings[,1], decreasing = TRUE)
+colnames(X)[head(o1,6)]
+colnames(X)[tail(o1,6)]
+
+o2 = order(loadings[,2], decreasing = TRUE)
+colnames(X)[head(o2,6)]
+colnames(X)[tail(o2,6)]
+
+#plot the data on PC1 and PC2
+qplot(scores[,1], scores[,2], xlab='Component 1', ylab='Component 2')
+#plot all vectors
+biplot(PC)
+```
+
+Because health_nutrition is the lowest loading in PC2 and food is high in PC1, we want to target the users whose PC2 is low and PC1 is high. These users are plotted in the bottom region slightly to the right in the biplot shown.
+
+
+
