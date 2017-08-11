@@ -908,7 +908,7 @@ plot(kval,CH_list)
 
 ![](STA_380_Homework_1-_Christine_Mulcahy,_Daniel_Quijano,_and_Elena_Reynolds_files/figure-markdown_github/kmeans%20method-1.png)
 
-The plot of CH index against K value, we decided that the best k value is 6. The max CH value occurs when k = 2, but since our dataset is so large, it makes sense to split into more than 2 clusters. At a k value of 6, the CH index is high, but we are clustering the data into smaller subsets, so we chose to work with k = 6 clusters.
+Using the plot of CH index against K value, we decided that the best k value is 6. The max CH value occurs when k = 2, but since our dataset is so large, it makes sense to split into more than 2 clusters. At a k value of 6, the CH index is high, but we are clustering the data into smaller subsets, so we chose to work with k = 6 clusters.
 
 ``` r
 #run kmeans to cluster the data
