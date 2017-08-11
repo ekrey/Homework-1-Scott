@@ -129,7 +129,7 @@ plot(kval,CH_list)
 
 ![](Market_Segmentation_files/figure-markdown_github/kmeans%20method-1.png)
 
-The plot of CH index against K value, we decided that the best k value is 6. The max CH value occurs when k = 2, but since our dataset is so large, it makes sense to split into more than 2 clusters. At a k value of 6, the CH index is high, but we are clustering the dtat into smaller subsets, so we chose to work with k = 6 clusters.
+The plot of CH index against K value, we decided that the best k value is 6. The max CH value occurs when k = 2, but since our dataset is so large, it makes sense to split into more than 2 clusters. At a k value of 6, the CH index is high, but we are clustering the data into smaller subsets, so we chose to work with k = 6 clusters.
 
 ``` r
 #run kmeans to cluster the data
@@ -142,52 +142,52 @@ finalcluster$size
     ## [1]  789 2069  610 1946 1349 1119
 
 ``` r
-finalcluster$centers[1,]
+finalcluster$centers[2,]
 ```
 
     ##          chatter   current_events           travel    photo_sharing 
-    ##     7.417585e-02     3.606297e-02     2.937761e-02     9.513109e-02 
+    ##     2.339924e-01     5.633070e-02     3.593937e-02     1.175645e-01 
     ##    uncategorized          tv_film    sports_fandom         politics 
-    ##     2.224055e-02     1.757223e-02     1.959959e-02     1.976196e-02 
+    ##     2.567276e-02     2.362182e-02     2.519554e-02     2.949261e-02 
     ##             food           family  home_and_garden            music 
-    ##     1.719793e-02     1.476521e-02     1.191375e-02     1.998202e-02 
+    ##     1.902771e-02     2.045199e-02     1.568317e-02     1.843638e-02 
     ##             news    online_gaming         shopping health_nutrition 
-    ##     1.452066e-02     1.575284e-02     2.735364e-02     2.785715e-02 
+    ##     1.406586e-02     1.523592e-02     6.777381e-02     2.145805e-02 
     ##      college_uni   sports_playing          cooking              eco 
-    ##     2.131878e-02     1.350505e-02     1.863808e-01     9.240428e-03 
+    ##     2.266085e-02     1.401526e-02     1.938834e-02     1.489493e-02 
     ##        computers         business         outdoors           crafts 
-    ##     1.154641e-02     9.291320e-03     1.370430e-02     9.377327e-03 
+    ##     1.402210e-02     1.265952e-02     9.474187e-03     1.268036e-02 
     ##       automotive              art         religion           beauty 
-    ##     1.322459e-02     1.499197e-02     1.383769e-02     5.994620e-02 
+    ##     1.886850e-02     1.049689e-02     1.102066e-02     9.606155e-03 
     ##        parenting           dating           school personal_fitness 
-    ##     1.265450e-02     9.773025e-03     1.556872e-02     1.751562e-02 
+    ##     1.236559e-02     1.691043e-02     1.500503e-02     1.719061e-02 
     ##          fashion   small_business             spam            adult 
-    ##     9.187170e-02     7.303306e-03     9.592632e-05     5.587268e-03
+    ##     1.460953e-02     9.441356e-03     7.020247e-05     4.676975e-03
 
 ``` r
-finalcluster$centers[3,]
+finalcluster$centers[4,]
 ```
 
     ##          chatter   current_events           travel    photo_sharing 
-    ##     0.0794688466     0.0332905082     0.0294269734     0.0462839098 
+    ##     0.0816242872     0.0492912467     0.0349430699     0.0434273869 
     ##    uncategorized          tv_film    sports_fandom         politics 
-    ##     0.0196575585     0.0307677418     0.0238171353     0.0204929533 
+    ##     0.0266437055     0.0447842182     0.0729954519     0.0204538113 
     ##             food           family  home_and_garden            music 
-    ##     0.0234091570     0.0192900309     0.0117797640     0.0162322167 
+    ##     0.0579891985     0.0335093834     0.0156797854     0.0208438668 
     ##             news    online_gaming         shopping health_nutrition 
-    ##     0.0136808572     0.1670040567     0.0185067144     0.0212915535 
+    ##     0.0183975036     0.0160780634     0.0237825555     0.0214936595 
     ##      college_uni   sports_playing          cooking              eco 
-    ##     0.1871487294     0.0411165121     0.0211665626     0.0090174713 
+    ##     0.0288050578     0.0148722498     0.0190312471     0.0130273344 
     ##        computers         business         outdoors           crafts 
-    ##     0.0096467863     0.0078761492     0.0112790478     0.0093338285 
+    ##     0.0128717928     0.0121358616     0.0133053981     0.0172850646 
     ##       automotive              art         religion           beauty 
-    ##     0.0145081405     0.0191572258     0.0126651431     0.0083521223 
+    ##     0.0176483138     0.0313111823     0.0579849730     0.0160396928 
     ##        parenting           dating           school personal_fitness 
-    ##     0.0116763789     0.0115996537     0.0094060021     0.0146445055 
+    ##     0.0437419395     0.0190613783     0.0319351484     0.0166516796 
     ##          fashion   small_business             spam            adult 
-    ##     0.0125177502     0.0082768751     0.0001934781     0.0060176601
+    ##     0.0166442516     0.0107877632     0.0003340708     0.0245884068
 
-The largest clusters are clusters 1 and 3, so we can look at the top topics of interest in the clusters to learn about many of the followers. Cluster 1 displays an interest in photo sharing, shopping, current events, and travel. Cluster 3 shows interest in sports fandom, food, and religion. We can use this information to tailor our message in our marketing campaign.
+The largest clusters are clusters 2 and 4, so we can look at the top topics of interest in the clusters to learn about many of the followers. Cluster 2 displays an interest in photo sharing, shopping, current events, and travel. Cluster 4 shows interest in sports fandom, food, and religion. We can use this information to tailor our message in our marketing campaign.
 
 ``` r
 #plot to show our target influencers
@@ -196,7 +196,7 @@ qplot(health_nutrition, food, data=X, color=factor(finalcluster$cluster))
 
 ![](Market_Segmentation_files/figure-markdown_github/unnamed-chunk-2-1.png)
 
-After looking at the 6 clusters, we plotted the clusters against health\_nutrition and food because we determined that these are the topics that most relate to nutrientH2O. We found that groups 3 and 6 show a high level of interest in these topics, so we can find the influencers among these groups to help us campaign about NutrientH2O.
+After looking at the 6 clusters, we plotted the clusters against health\_nutrition and food because we determined that these are the topics that most relate to nutrientH2O. We found that groups 4 and 5 show a high level of interest in these topics, so we can find the influencers among these groups to help us campaign about NutrientH2O.
 
 PCA method:
 ===========
