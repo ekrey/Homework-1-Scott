@@ -73,12 +73,15 @@ Another way we could improve our would be to perform a comps analysis. If we cou
 2. Another error in judgment is that he assumed that rents were affected by whether or not the building is considered green. As we came to realize from fitting numerous models, the p-value for the green_rating variable was too high. While it is true that the medain rent charged by green buildings is higher than that of non-green ones, it could be attributed to other factors. For example, green buildings tend to be newer and fancier than conventional ones - as seen in the charts below. 
 
 ```{r}
-par(mfrow = c(2,2))
-hist(nongreen$age, main = 'Age of nongreen Buildings', xlab = 'age', xlim = range(1:150), breaks = 20, ylim = range(1:2000))
-hist(green_only$age, main = 'Age of GREEN Buildings', xlab = 'age', xlim = range(1:150), breaks = 10, ylim = range(1:2000))
+library(lattice)
+par(mfrow=c(1,2))
+histogram(nongreen$age, main = 'Age of nongreen Buildings', xlab = 'age', xlim = range(1:150), breaks = 20, ylim = range(1:45))
+histogram(green_only$age, main = 'Age of GREEN Buildings', xlab = 'age', xlim = range(1:150), breaks = 10, ylim = range(1:45))
 
-barplot(table(nongreen$class_a==0, nongreen$class_a==1), main = 'Fancy nongreen Buildings', ylim = range(1:4500))
-barplot(table(green_only$class_a==0, green_only$class_a==1), main = 'Fancy GREEN Buildings', ylim = range(1:4500))
+classa.freq = table(nongreen$class_a)
+gclassa.freq = table(green_only$class_a)
+barplot(classa.freq/sum(classa.freq), main = 'Fancy nongreen Buildings', ylim = range(0,.8), ylab = 'Fraction of all Buildings')
+barplot(gclassa.freq/sum(gclassa.freq), main = 'Fancy GREEN Buildings', ylim = range(0,.8), ylab = 'Fraction of GREEN Buildings')
 ```
 
 
